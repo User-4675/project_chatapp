@@ -7,6 +7,6 @@ echo "Compiling Client 2..."
 g++ ../client2/client.cpp ../packet/Packet.cpp -o client2.out
 
 echo "Compiling server..."
-g++ ../server/server.cpp ../packet/Packet.cpp -o server.out
+g++  ../server/main.cpp ../server/Server.cpp ../packet/Packet.cpp -o server.out
 echo "Done !"
 
