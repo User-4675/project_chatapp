@@ -13,19 +13,20 @@ private:
     /* Client's socket and port */
     int sock_fd, port; 
     /* Servers IP address */
-    char ip[16];
-    /* Servers  */
+    std::string ip;
+    /* Serves Address Structure */
     struct sockaddr_in server_address;
 public:
-    ClientNetwork(int port, char ip[16]);
+
+    ClientNetwork(int port, const std::string &ip);
     int connectToServer();
     
     std::vector<char> receiveBuffer(size_t length);
-    ssize_t recv_all(void *buffer, size_t length);
-    void sendBuffer(std::vector<char> buffer);
+    ssize_t sendBuffer(const std::vector<char> &buffer);
+    ssize_t recv_all(const std::vector<char> &buffer, size_t length);
     
-    void shutdownSocket();
     void closeSocket();
+    void shutdownSocket();
 };  
 
 #endif

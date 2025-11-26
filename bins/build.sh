@@ -1,11 +1,13 @@
 #!/bin/bash
 
-echo "Compiling client 1..."
+echo "Compiling client..."
 g++ ../client/*.cpp ../packet/*.cpp -o client.out
 
-echo "Compiling client 2..."
-g++ ../client2/*.cpp ../packet/Packet.cpp -o client2.out
+# Remove client data (for id-request testing)
+rm -r ../clientJSON/
+mkdir ../clientJSON
 
+# Compile and run server if compilation succeeded
 echo "Compiling server..."
-g++  ../server/*.cpp ../packet/Packet.cpp -o server.out
-echo "Done !"
+g++  ../server/*.cpp ../packet/Packet.cpp -o server.out && ./server.out || echo "Server Failed to compile"
+

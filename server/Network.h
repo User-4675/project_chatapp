@@ -14,16 +14,16 @@ const int BACKLOG = 5;
 class Network {
 
     private:
-        
+        /* File descriptor set tracking active clients*/
         fd_set readfds;
         
         /* Server's socket and port */
         int server_fd, port;
 
-        /*  Socket Address ? */
+        /* Socket Address Structure */
         struct sockaddr_in address; 
 
-        /* Bite-length of address */
+        /* Bytelength of address */
         socklen_t addrlen;
 
         /* Integer values used for client communication */

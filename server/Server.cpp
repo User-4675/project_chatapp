@@ -5,7 +5,7 @@ Server::Server(Network& net) : serverNetwork(net) {}
 
 bool Server::setup(){
     if (!serverNetwork.serverSetup()){
-        printf("Server: Failed to set up the server...");
+        printf("[Server] - Failed to set up the server...");
         return false;
     }
     return true;
@@ -13,8 +13,7 @@ bool Server::setup(){
 
 bool Server::run(){
 
-    std::cout << "Server listening on port " << serverNetwork.getPort() << "...\n";
-
+    cout << "Server listening on port " << serverNetwork.getPort() << "...\n";
     while (true) {
 
         // Reset the fd set to zero and set server fd
@@ -22,18 +21,13 @@ bool Server::run(){
 
         // Listen for activity on any socket
         if(serverNetwork.waitForActivity() < 0){
-            perror("[Server] - Failed while waiting for activity...");
+            perror("[Server] - Failed while waiting for activity");
             exit(EXIT_FAILURE);
         }
         
 
         /* Identify new connections */
         int new_socket = serverNetwork.handleNewClient();
-        if (new_socket != -1){
-            // Greet new Client
-            sendPacket(new_socket, MessageType::GREETINGS, 67, 
-                "Welcome to server!");
-        }
         
         // Retrieve all online clients and react to their messages
         auto ready_sock = serverNetwork.getReadyClients();
@@ -41,8 +35,8 @@ bool Server::run(){
             Packet msg;
             if(!recieveMessage(sock, msg)){
 
-                std::cout << "Client " << sock_to_id_map[sock]; 
-                std::cout << " " << sock << " disconected\n"; 
+                cout << "Client " << sockfd_to_id[sock]; 
+                cout << " " << sock << " disconected\n"; 
                 
                 deregisterClient(sock);
                 seeOnlineClients();
@@ -56,10 +50,13 @@ bool Server::run(){
 }
 
 bool Server::recieveMessage(int sockfd, Packet& p){
-    std::vector<char> buffer(Packet::HEADER_SIZE);
+    vector<char> buffer(Packet::HEADER_SIZE);
     
     // Recieve header 
     buffer = serverNetwork.receiveBuffer(sockfd, Packet::HEADER_SIZE);
+
+    // In case of Identification -> Send only header, server knows
+    // ...
     if (buffer.empty()) return false; // Client Disconnected
     p.deserializeHeader(buffer);
     
@@ -72,53 +69,63 @@ bool Server::recieveMessage(int sockfd, Packet& p){
     
     if (p.getType() == MessageType::GREETINGS){
         // Mark that client exists
-        std::string clientID;
-        p.copyPayload(clientID);
-        registerClient(sockfd, clientID);
-        
-        std::cout << "Client " << sock_to_id_map[sockfd] << " online on ";
-        std::cout << sockfd << " fd" << std::endl;
+        registerClient(sockfd, p.getSourceID());
         return true;
     }
     
     if (p.getType() == MessageType::IDENTIFICATION) {
         // Client is asking for new ID -> Generate it and send back
-        std::string newId = "#NEW_CLIENT";
-        std::cout << "Generating ID " << newId << " -> " << sockfd;
-        Packet id_packet(MessageType::TEXT, 67, newId);
+        uint32_t newID = getNextFreeId();
+        string newID_str = to_string(newID);
+        cout << "Generated ID - " <<  newID << " for " << sockfd <<endl;
+        Packet id_packet(MessageType::IDENTIFICATION, server_id, newID, newID_str);
         buffer = id_packet.serialize();
         send(sockfd, buffer.data(), buffer.size(), 0);
         return true;
     }
     
-    // Message is simple text message
-    std::cout << "[" << sock_to_id_map[sockfd] << "]:";
+    // Message is simple text message -> Read and redirect to client
+    cout << "[" << sockfd_to_id[sockfd] << " -> " << p.getDestinationID() << "]:";
     p.seePayload();
+    // Send the package to sockfd mapped with destionation ID
+    if (id_to_client.find(p.getDestinationID()) == id_to_client.end()){
+        cout << "Client " << p.getDestinationID() <<" Is not Online" << endl;
+        // Check if client exists
+    } else {
+        serverNetwork.sendBuffer(id_to_client[p.getDestinationID()].sockfd, p.serialize());
+    }
     return true;
 }
 
-void Server::sendPacket(int sock_fd, MessageType type, uint32_t dest, std::string msg){
-    Packet p = {type, dest, msg};
-    std::vector<char> buffer = p.serialize();
+
+
+void Server::sendPacket(int sock_fd, MessageType type, uint32_t dest, string msg){
+    Packet p = {type, 0, dest, msg};
+    vector<char> buffer = p.serialize();
     serverNetwork.sendBuffer(sock_fd, buffer);
 }
 
-void Server::registerClient(int sockfd, std::string clientID){
-    sock_to_id_map[sockfd] = clientID;
-    id_to_sock_map[clientID] = sockfd;
+void Server::registerClient(int sockfd, uint32_t clientID){
+    cout << "Registering new client " << clientID;
+    id_to_client[clientID] = ClientInfo{clientID, sockfd};
+    sockfd_to_id[sockfd] = clientID;
 }
 
 void Server::deregisterClient(int sockfd){
-    id_to_sock_map.erase(sock_to_id_map[sockfd]);
-    sock_to_id_map.erase(sockfd);
+    id_to_client.erase(sockfd_to_id[sockfd]);
+    sockfd_to_id.erase(sockfd);
     serverNetwork.disconnectClient(sockfd);
     close(sockfd);
 }
 
 void Server::seeOnlineClients(){
-    std::cout << "--- Online Client(s) ---\n"; 
-    for (auto it = sock_to_id_map.begin(); it != sock_to_id_map.end(); ++it){
-        std::cout << it->second << " (" << it->first << ") ";
+    cout << "--- Online Client(s) ---\n"; 
+    for (auto it = sockfd_to_id.begin(); it != sockfd_to_id.end(); ++it){
+        cout << it->second << " (" << it->first << ") ";
     }
-    std::cout << std::endl << "-------------\n";
+    cout << endl << "-------------\n";
+}
+
+uint32_t Server::getNextFreeId(){
+    return (NEXT_FREE_ID++);
 }

@@ -1,0 +1,3 @@
+# Bugs
+
+- **Empty message disconnect** {priority - low} - Client gets disconnected when      sending empty message. {Cause} - recv() recieves 0 bytes from payload, however, server did not disconnected (recv = 0).

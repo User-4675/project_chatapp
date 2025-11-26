@@ -1,9 +1,7 @@
 
 #include "Network.h"
 
-Network::Network(int port){
-    this->port = port;
-}
+Network::Network(int port) : port(port){}
 
 bool Network::serverSetup(){
 
@@ -15,7 +13,7 @@ bool Network::serverSetup(){
     int opt = 1;
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (server_fd < 0) {
-        perror("Failed to create socket\n");
+        perror("[Network] - Failed to create socket\n");
         return false;
     }
 
@@ -23,7 +21,7 @@ bool Network::serverSetup(){
     int flags = fcntl(server_fd, F_GETFL, 0);
     if (flags == -1) { perror("fcntl F_GETFL"); return false; }
     if (fcntl(server_fd, F_SETFL, flags | O_NONBLOCK) == -1) {
-        perror("fcntl F_SETFL O_NONBLOCK");
+        perror("[Network] - fcntl F_SETFL O_NONBLOCK");
         return false;
     }
     
@@ -36,13 +34,13 @@ bool Network::serverSetup(){
     
     // Bind the server socket
     if (bind(server_fd, (const sockaddr *)&address, sizeof(address))){
-        perror("Failed to bind socket with address");
+        perror("[Network] - Failed to bind socket with address");
         return false;   
     }
     
     // Make server listen for traffic
     if (listen(server_fd, BACKLOG) == -1){
-        perror("Server Failed to Listen...");
+        perror("[Network] - Server Failed to Listen...");
         return false;
     }
 
@@ -68,7 +66,7 @@ void Network::prepareReadSet(){
 int Network::waitForActivity(){
     int activity = select(max_sd + 1, &readfds, nullptr, nullptr, nullptr);
     if(activity < 0 && (errno != EINTR)){
-        perror("Select Error...");
+        perror("[Network] - Select Error");
         return -1;
     }
     return activity;
@@ -85,8 +83,7 @@ int Network::handleNewClient() {
     return new_socket;
 }
 
-/* Itterates through sockets and returns first active one.
-    Returns -1 if there is not pending client */
+/* Returns a vector of active clients */
 std::vector<int> Network::getReadyClients(){
     std::vector<int> ready_clients;
 
@@ -99,6 +96,7 @@ std::vector<int> Network::getReadyClients(){
     return ready_clients;
 }
 
+/* Assigns new socket to new client and adds it to list */
 int Network::acceptNewClient(){
     struct sockaddr_in address;
     socklen_t addres_len = sizeof(address);
@@ -150,7 +148,7 @@ ssize_t Network::recv_all(int sock, void *buffer, size_t length){
     return total; // Returns 0 if client disconnected
 }
 
-/* Removes file descriptor from clients*/
+/* Removes file descriptor from clients */
 void Network::disconnectClient(int sock_fd){
     for (int i = 0; i < MAX_CLIENTS; i++){
         if(client_sockets[i] == sock_fd){

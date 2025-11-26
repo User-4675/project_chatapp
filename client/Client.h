@@ -5,6 +5,7 @@
 #include "../packet/Packet.h"
 #include "ClientNetwork.h"
 
+#include <filesystem>
 #include <fstream>
 #include <nlohmann/json.hpp>
 
@@ -15,37 +16,41 @@
 
 using json = nlohmann::json;
 
-static std::string PATH_TO_ID = "../client/client.json";
+// static string PATH_TO_ID = "../client/client.json";
 static bool RUNNING = 1;
 
 class Client {
     private:
 
     /* Unique identifier of Client*/
-    std::string id;
+    uint32_t id;
     
     /* Client's ID */
-    std::string client_input;
+    string client_input;
     
     /* Servers for serialization*/
-    std::vector<char> buffer;
+    vector<char> buffer;
 
     /* Recieving thread */
-    std::thread reciever_thread;
+    thread reciever_thread;
 
     /* Network handler */
     ClientNetwork& network;
 
+    string PATH_TO_ID;
+
 public:
-    Client(ClientNetwork &net);
-    void setup();
+    Client(ClientNetwork &net, string path);
+    int setup();
     void run();
     void fetchClientInfo();
-    void sendGreetings();
+    
+    int sendGreetings();
     void receive_message();
-        
-    ssize_t recv_all(size_t length);
+    int requestAndSetNewID();
 
+    
+    int sendPacket(Packet message);
 };
 
 #endif
