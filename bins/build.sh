@@ -5,7 +5,7 @@ g++ ../client/*.cpp ../packet/*.cpp -o client.out
 
 # Remove client data (for id-request testing)
 rm -r ../clientJSON/
-mkdir ../clientJSON
+# mkdir ../clientJSON
 
 # Compile and run server if compilation succeeded
 echo "Compiling server..."

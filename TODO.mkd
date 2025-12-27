@@ -1,3 +1,8 @@
 # Bugs
 
-- **Empty message disconnect** {priority - low} - Client gets disconnected when      sending empty message. {Cause} - recv() recieves 0 bytes from payload, however, server did not disconnected (recv = 0).
+- **Server State Missconfiguration** {priority - low} - Server does not save the id generation state in case of shut-down. 
+
+- **Empty message disconnect** 
+    - {priority} - low to negligable
+    - {Description} - Client gets disconnected when sending empty message. 
+    - {Cause} - recv() recieves 0 bytes from payload, however, server did not disconnected (recv = 0).

@@ -97,8 +97,6 @@ bool Server::recieveMessage(int sockfd, Packet& p){
     return true;
 }
 
-
-
 void Server::sendPacket(int sock_fd, MessageType type, uint32_t dest, string msg){
     Packet p = {type, 0, dest, msg};
     vector<char> buffer = p.serialize();
@@ -106,7 +104,7 @@ void Server::sendPacket(int sock_fd, MessageType type, uint32_t dest, string msg
 }
 
 void Server::registerClient(int sockfd, uint32_t clientID){
-    cout << "Registering new client " << clientID;
+    cout << "Registering new client " << clientID << endl;
     id_to_client[clientID] = ClientInfo{clientID, sockfd};
     sockfd_to_id[sockfd] = clientID;
 }
@@ -115,7 +113,7 @@ void Server::deregisterClient(int sockfd){
     id_to_client.erase(sockfd_to_id[sockfd]);
     sockfd_to_id.erase(sockfd);
     serverNetwork.disconnectClient(sockfd);
-    close(sockfd);
+
 }
 
 void Server::seeOnlineClients(){

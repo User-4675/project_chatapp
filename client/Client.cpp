@@ -22,6 +22,9 @@ int Client::setup(){
 
 // Main input loop
 void Client::run(){
+    
+    uint32_t destination_id = 0; // Set to server by default
+    
     while(RUNNING){        
         cout << "[" << id << "]> ";
         getline(cin, Client::client_input);
@@ -29,10 +32,17 @@ void Client::run(){
         if (client_input == "\\kill"){
             RUNNING = false;
             break;
-        }
+        } 
         
-        Packet p(MessageType::TEXT, id, 999, client_input);
-        sendPacket(p);
+        if (client_input == "\\setdest") {
+            cout << "[New Destination] > ";
+            cin >> destination_id;
+            cin.ignore(); // Ignore new line character
+            cout << "Destination set to " << destination_id << endl;
+        } else {
+            Packet p(MessageType::TEXT, id, destination_id, client_input);
+            sendPacket(p);
+        }
     }
 
     network.shutdownSocket();
@@ -75,9 +85,7 @@ void Client::receive_message(){
             break;
         }
         p.deserializeHeader(buffer);
-        
-        p.seeHeader();
-        cout << "Server said dest=" << p.getDestinationID();
+        // p.seeHeader();
         
         // Recieve Payload
         buffer.resize(p.getPayloadSize());
@@ -97,7 +105,6 @@ void Client::fetchClientInfo(){
     filesystem::path filePath(PATH_TO_ID);
     filesystem::create_directories(filePath.parent_path());
 
-
     json data;
 
     // Attemp to read file contents
@@ -112,9 +119,9 @@ void Client::fetchClientInfo(){
     if (!data.contains("id")){
 
         requestAndSetNewID();
-        data["id"] = this->id;
-
+        
         // Save JSON to file
+        data["id"] = this->id;
         ofstream file_out(PATH_TO_ID);
         file_out << data;
         file_out.close();

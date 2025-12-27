@@ -156,5 +156,6 @@ void Network::disconnectClient(int sock_fd){
             break;
         }
     }
+    close(sock_fd);
 }
 

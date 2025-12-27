@@ -7,6 +7,7 @@
 #include <vector>
 #include <iostream>
 #include <fcntl.h>
+#include <unistd.h>
 
 const int MAX_CLIENTS = 10;
 const int BACKLOG = 5;

@@ -49,7 +49,6 @@ public:
     void seeOnlineClients();
     bool recieveMessage(int sockfd, Packet& p);
     void sendPacket(int sock_fd, MessageType type, uint32_t dest, string msg);
-    void forwardPacket(Packet &p);
     
     uint32_t getNextFreeId();
 };
